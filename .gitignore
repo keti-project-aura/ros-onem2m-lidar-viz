@@ -1,0 +1,14 @@
+.idea/
+.DS_Store
+/devel/
+/build/
+src/data_save_module/config/mobius_config.json
+
+# Catkin / build artifacts
+/install/
+/log/
+.catkin_workspace
+
+# Python cache
+__pycache__/
+*.py[cod]

@@ -1,0 +1,7 @@
+{
+  "url": "http://your-mobius-host:7579/Mobius/AIoT_Test",
+  "origin": "YOUR_ORIGIN",
+  "request_id": "YOUR_RI",
+  "content_type": "application/json;ty=4",
+  "accept": "application/json"
+}

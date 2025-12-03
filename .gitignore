@@ -3,6 +3,8 @@
 /devel/
 /build/
 src/data_save_module/config/mobius_config.json
+src/control_module/config/control_config.json
+src/data_save_module/config/local_save_config.json
 
 # Catkin / build artifacts
 /install/

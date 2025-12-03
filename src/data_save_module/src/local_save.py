@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import rospy
+import json
 import os
+import rospy
 import numpy as np
 import open3d as o3d
 from sensor_msgs.msg import PointCloud2
@@ -12,20 +13,42 @@ from datetime import datetime
 class SensorRecorder:
     def __init__(self):
         rospy.init_node("local_save", anonymous=True)
+        self.config = self.load_config()
         
         # 저장 디렉토리 설정
-        self.save_dir = os.path.expanduser("~/uneck-ws/save")
+        self.save_dir = os.path.expanduser(self.config["save_dir"])
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         
         # ROS 토픽 구독 (Velodyne)
-        rospy.Subscriber("/velodyne_points", PointCloud2, self.save_velodyne_pcd)
+        rospy.Subscriber(self.config["velodyne_topic"], PointCloud2, self.save_velodyne_pcd)
 
         # 데이터 저장 요청 토픽 구독 (control_module에서 전달)
-        rospy.Subscriber("/sensor_command", String, self.sensor_command_callback)
+        rospy.Subscriber(self.config["command_topic"], String, self.sensor_command_callback)
         
         # 저장 요청 상태
         self.velodyne_pcd_requested = False
+
+    def load_config(self):
+        """Load local save configuration from JSON."""
+        default_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "local_save_config.json")
+        config_path = os.environ.get("LOCAL_SAVE_CONFIG_PATH", default_path)
+
+        if not os.path.exists(config_path):
+            raise RuntimeError(
+                f"Local save config file not found: {config_path}. "
+                "Copy local_save_config.json.example and set LOCAL_SAVE_CONFIG_PATH if needed."
+            )
+
+        with open(config_path, "r") as f:
+            data = json.load(f)
+
+        required = ["save_dir", "velodyne_topic", "command_topic"]
+        missing = [k for k in required if k not in data or data[k] in (None, "")]
+        if missing:
+            raise RuntimeError(f"Local save config missing keys: {missing}")
+
+        return data
 
     def sensor_command_callback(self, msg):
         command = msg.data

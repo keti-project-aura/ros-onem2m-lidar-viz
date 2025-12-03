@@ -1,0 +1,5 @@
+{
+  "save_dir": "~/uneck-ws/save",
+  "velodyne_topic": "/velodyne_points",
+  "command_topic": "/sensor_command"
+}

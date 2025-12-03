@@ -1,0 +1,9 @@
+<launch>
+    <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch" />
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+    <node pkg="control_module" type="launch.py" name="control_module" output="screen" />
+    <node pkg="data_save_module" type="local_save.py" name="local_save" output="screen" />
+    <node pkg="data_save_module" type="mobius_save.py" name="mobius_save" output="screen" />
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find ros_onem2m_lidar_viz)/rviz/ros_onem2m_lidar_viz.rviz" output="screen" />
+</launch>

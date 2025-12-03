@@ -1,16 +1,45 @@
 #!/usr/bin/env python
 
-import rospy
-from std_msgs.msg import String
+import json
+import os
 import socket
 
-def start_tcp_server():
-    rospy.init_node('control_node', anonymous=True)
-    sensor_pub = rospy.Publisher('sensor_command', String, queue_size=10)
+import rospy
+from std_msgs.msg import String
 
-    host = '0.0.0.0'
-    port = 5000
-    buffer_size = 1024
+
+def load_config():
+    """Load TCP server configuration."""
+    default_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "control_config.json")
+    config_path = os.environ.get("CONTROL_CONFIG_PATH", default_path)
+
+    if not os.path.exists(config_path):
+        raise RuntimeError(
+            f"Control config file not found: {config_path}. "
+            "Copy control_config.json.example and set CONTROL_CONFIG_PATH if needed."
+        )
+
+    with open(config_path, "r") as f:
+        data = json.load(f)
+
+    required = ["host", "port", "buffer_size"]
+    missing = [k for k in required if k not in data or data[k] in (None, "")]
+    if missing:
+        raise RuntimeError(f"Control config missing keys: {missing}")
+
+    data["port"] = int(data["port"])
+    data["buffer_size"] = int(data["buffer_size"])
+    return data
+
+
+def start_tcp_server():
+    cfg = load_config()
+    rospy.init_node("control_node", anonymous=True)
+    sensor_pub = rospy.Publisher("sensor_command", String, queue_size=10)
+
+    host = cfg["host"]
+    port = cfg["port"]
+    buffer_size = cfg["buffer_size"]
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
@@ -25,12 +54,12 @@ def start_tcp_server():
         try:
             partial_data = ""
             while not rospy.is_shutdown():
-                data = client_socket.recv(buffer_size).decode('utf-8')
+                data = client_socket.recv(buffer_size).decode("utf-8")
                 if not data:
                     break
 
                 partial_data += data
-                commands = partial_data.split('\n')
+                commands = partial_data.split("\n")
                 partial_data = commands[-1]
 
                 for command in commands[:-1]:
@@ -48,7 +77,8 @@ def start_tcp_server():
             client_socket.close()
             rospy.loginfo("Connection closed")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     try:
         start_tcp_server()
     except rospy.ROSInterruptException:
